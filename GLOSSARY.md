@@ -22,4 +22,5 @@ for example because it is built at runtime. It may be wrong, so exact matches ra
 
 **Shadow Source**
 A Ruby source the plugin builds to stand in for a non-Ruby document, such as a `.feature` file, so that Solargraph's
-Ruby-only machinery can work with it.
+Ruby-only machinery can work with it. It keeps the document's lines and columns: each Step's text sits at the same line
+and column in the Shadow Source as in the document, so a position in one is the same position in the other.
