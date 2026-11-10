@@ -115,6 +115,34 @@ RSpec.describe Solargraph::Cucumber::Walker::BaseProcessor do
       expect(captured).to be_empty
     end
 
+    it 'passes the pattern captures after the node to a block handler' do
+      captured = []
+      processor_class = Class.new(described_class) do
+        on_node_pattern_enter('(send nil? $_ (str $_))') { |*args| captured << args }
+      end
+      processor = processor_class.new(walker)
+
+      node = parse("Given('a step')")
+      processor.dispatch_enter(node)
+      expect(captured).to eq([[node, :Given, 'a step']])
+    end
+
+    it 'passes the pattern captures after the node to a named handler' do
+      processor_class = Class.new(described_class) do
+        attr_reader :captured
+
+        on_node_pattern_enter '(send nil? $_ (str $_))', :handle
+
+        def handle(node, keyword, text)
+          @captured = [node.type, keyword, text]
+        end
+      end
+      processor = processor_class.new(walker)
+
+      processor.dispatch_enter(parse("Given('a step')"))
+      expect(processor.captured).to eq([:send, :Given, 'a step'])
+    end
+
     it 'does not fire on leave' do
       captured = []
       processor_class = Class.new(described_class) do
@@ -139,6 +167,18 @@ RSpec.describe Solargraph::Cucumber::Walker::BaseProcessor do
       it_node = parse('it { }')
       processor.dispatch_leave(it_node)
       expect(captured).to contain_exactly(it_node)
+    end
+
+    it 'passes the pattern captures after the node' do
+      captured = []
+      processor_class = Class.new(described_class) do
+        on_node_pattern_leave('(send nil? $_ (str $_))') { |*args| captured << args }
+      end
+      processor = processor_class.new(walker)
+
+      node = parse("Given('a step')")
+      processor.dispatch_leave(node)
+      expect(captured).to eq([[node, :Given, 'a step']])
     end
 
     it 'does not fire on enter' do

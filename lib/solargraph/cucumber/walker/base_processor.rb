@@ -88,7 +88,7 @@ module Solargraph
 
           call_handler(node, self.class.node_type_enter_handlers[node.type])
           self.class.node_pattern_enter_handlers.each do |matcher_name, handler|
-            call_handler(node, handler) if send(matcher_name, node)
+            send(matcher_name, node) { |*captures| call_handler(node, handler, *captures) }
           end
         end
 
@@ -100,20 +100,21 @@ module Solargraph
 
           call_handler(node, self.class.node_type_leave_handlers[node.type])
           self.class.node_pattern_leave_handlers.each do |matcher_name, handler|
-            call_handler(node, handler) if send(matcher_name, node)
+            send(matcher_name, node) { |*captures| call_handler(node, handler, *captures) }
           end
         end
 
         private
 
-        # Invoke a handler with the given node.
+        # Invoke a handler with the given node and the captures of the pattern that matched it, if any.
         # @param node [RuboCop::AST::Node]
         # @param handler [Symbol, Proc, nil]
+        # @param captures [Array<Object>]
         # @return [void]
-        def call_handler(node, handler)
+        def call_handler(node, handler, *captures)
           return unless handler
 
-          handler.is_a?(Symbol) ? send(handler, node) : instance_exec(node, &handler)
+          handler.is_a?(Symbol) ? send(handler, node, *captures) : instance_exec(node, *captures, &handler)
         end
       end
     end
