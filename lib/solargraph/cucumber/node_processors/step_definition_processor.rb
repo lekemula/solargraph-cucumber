@@ -5,6 +5,7 @@ module Solargraph
     module NodeProcessors
       # PROTOTYPE: records `Given('...') { }` and friends, in any Gherkin dialect.
       class StepDefinitionProcessor < Walker::BaseProcessor
+        walked_by StepDefinitionWalker
         on_node_pattern_enter '(block (send nil? #step_keyword? {str dstr regexp} ...) ...)', :record
 
         # @param keyword [Symbol]

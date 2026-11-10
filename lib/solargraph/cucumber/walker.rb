@@ -3,6 +3,7 @@
 module Solargraph
   module Cucumber
     # Generic AST walker with a processor registry.
+    # Each subclass has its own registry; processors join it with {BaseProcessor.walked_by}.
     # Subclasses add domain-specific setup around {#walk!}.
     class Walker
       class << self
@@ -39,7 +40,7 @@ module Solargraph
       def walk!
         return unless @ast
 
-        @processors = Walker.processor_classes.map { |klass| klass.new(self) }
+        @processors = self.class.processor_classes.map { |klass| klass.new(self) }
         walk(@ast)
         (@after_walk_handlers ||= []).each(&:call)
       end

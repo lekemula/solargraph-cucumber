@@ -5,6 +5,7 @@ module Solargraph
     module NodeProcessors
       # PROTOTYPE: records `ParameterType(name: 'color', regexp: /red|green/, ...)`.
       class ParameterTypeProcessor < Walker::BaseProcessor
+        walked_by StepDefinitionWalker
         on_node_pattern_enter <<~PATTERN, :record
           (send nil? :ParameterType (hash <(pair (sym :name) (str $_)) (pair (sym :regexp) $_) ...>))
         PATTERN

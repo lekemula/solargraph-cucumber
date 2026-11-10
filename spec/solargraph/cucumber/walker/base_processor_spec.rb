@@ -7,12 +7,6 @@ RSpec.describe Solargraph::Cucumber::Walker::BaseProcessor do
 
   let(:walker) { instance_double(Solargraph::Cucumber::Walker) }
 
-  around do |example|
-    original_processors = Solargraph::Cucumber::Walker.processor_classes.dup
-    example.run
-    Solargraph::Cucumber::Walker.processor_classes.replace(original_processors)
-  end
-
   describe '.on_node_type' do
     context 'with a symbol method name' do
       let(:processor_class) do
@@ -194,10 +188,19 @@ RSpec.describe Solargraph::Cucumber::Walker::BaseProcessor do
     end
   end
 
-  describe '.inherited' do
-    it 'auto-registers subclass with Walker.processor_classes' do
-      new_class = Class.new(described_class)
-      expect(Solargraph::Cucumber::Walker.processor_classes).to include(new_class)
+  describe '.walked_by' do
+    it 'registers the processor with the given walker class only' do
+      walker_class = Class.new(Solargraph::Cucumber::Walker)
+      processor_class = Class.new(described_class) { walked_by walker_class }
+
+      expect(walker_class.processor_classes).to eq([processor_class])
+      expect(Solargraph::Cucumber::Walker.processor_classes).not_to include(processor_class)
+    end
+
+    it 'leaves an unbound processor out of every walker' do
+      processor_class = Class.new(described_class)
+
+      expect(Solargraph::Cucumber::Walker.processor_classes).not_to include(processor_class)
     end
   end
 

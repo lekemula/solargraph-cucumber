@@ -57,6 +57,9 @@ module Solargraph
       end
     end
 
+    # Walks step files with the Step Definition and Parameter Type processors only.
+    class StepDefinitionWalker < Walker; end
+
     # Compiles Step Definitions found under `<root>/features/**/*.rb` and matches Step text against them.
     class StepIndex
       CE = ::Cucumber::CucumberExpressions
@@ -123,7 +126,7 @@ module Solargraph
       # @param path [String]
       # @return [Array(Array<StepDefinition>, Array<ParameterTypeDefinition>)]
       def walk(path)
-        walker = Walker.new(rubocop_ast(Solargraph::Parser.parse(File.read(path), path)))
+        walker = StepDefinitionWalker.new(rubocop_ast(Solargraph::Parser.parse(File.read(path), path)))
         walker.walk!
         [walker.context.fetch(:step_definitions, []), walker.context.fetch(:parameter_types, [])]
       rescue StandardError => e

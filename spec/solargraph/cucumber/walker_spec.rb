@@ -5,23 +5,39 @@ RSpec.describe Solargraph::Cucumber::Walker do
     RuboCop::AST::ProcessedSource.new(code, RUBY_VERSION.to_f).ast
   end
 
-  around do |example|
-    original_processors = described_class.processor_classes.dup
-    example.run
-    described_class.processor_classes.replace(original_processors)
-  end
-
   describe '#walk!' do
-    it 'dispatches enter and leave events depth-first to registered processors' do
+    it 'dispatches enter and leave events depth-first to its processors' do
       events = []
+      walker_class = Class.new(described_class)
       Class.new(described_class::BaseProcessor) do
+        walked_by walker_class
         on_node_type(:block) { |n| events << [:enter, n.method_name] }
         on_node_type_leave(:block) { |n| events << [:leave, n.method_name] }
       end
 
-      described_class.new(parse("Given('a') { When('b') {} }")).walk!
+      walker_class.new(parse("Given('a') { When('b') {} }")).walk!
 
       expect(events).to eq([%i[enter Given], %i[enter When], %i[leave When], %i[leave Given]])
+    end
+
+    it 'runs only the processors bound to its own walker class' do
+      events = []
+      shadow_walker = Class.new(described_class)
+      step_walker = Class.new(described_class)
+      Class.new(described_class::BaseProcessor) do
+        walked_by shadow_walker
+        on_node_type(:block) { events << :shadow }
+      end
+      Class.new(described_class::BaseProcessor) do
+        walked_by step_walker
+        on_node_type(:block) { events << :step }
+      end
+
+      step_walker.new(parse("Given('a') {}")).walk!
+      expect(events).to eq([:step])
+
+      shadow_walker.new(parse("Given('a') {}")).walk!
+      expect(events).to eq(%i[step shadow])
     end
 
     it 'runs after-walk handlers once the walk completes' do

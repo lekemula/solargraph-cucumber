@@ -66,9 +66,12 @@ module Solargraph
             node_pattern_leave_handlers << [matcher_name, method_name || block]
           end
 
-          def inherited(subclass)
-            super
-            Walker.register_processor(subclass)
+          # Bind this processor to a walker class, so that walker runs it on every walk.
+          # Each Walker subclass keeps its own registry, so processors bound to one never run on another.
+          # @param walker_class [Class<Solargraph::Cucumber::Walker>]
+          # @return [void]
+          def walked_by(walker_class)
+            walker_class.register_processor(self)
           end
         end
 
