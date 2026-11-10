@@ -88,6 +88,15 @@ module Solargraph
                 .map(&:step_definition)
       end
 
+      # Approximate Matches only count when no text matches exactly.
+      # @param step_texts [Array<String>] one Step's texts, e.g. an Outline Step expanded per Examples row
+      # @return [Array<StepDefinition>] the union over all texts, in index order
+      def best_matches(*step_texts)
+        hits = compiled.select { |c| step_texts.any? { |text| safe_match?(c, text) } }
+        exact, approximate = hits.partition { |c| !c.approximate }
+        (exact.empty? ? approximate : exact).map(&:step_definition)
+      end
+
       # @return [Array<StepDefinition>]
       def step_definitions
         refresh

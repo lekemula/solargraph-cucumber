@@ -55,6 +55,47 @@ RSpec.describe Solargraph::Cucumber::StepIndex do
     expect(index.step_definitions.first.approximate).to be(true)
   end
 
+  describe '#best_matches' do
+    def best_lines_for(*texts)
+      index.best_matches(*texts).map { |sd| sd.location.range.start.line + 1 }
+    end
+
+    it 'keeps every exact match of an Ambiguous Step and drops Approximate Matches' do
+      write 'features/step_definitions/steps.rb', <<~'RUBY'
+        Given("the basket weighs #{UNIT}") { }
+        Given('the basket weighs {int} kg') { }
+        Given(/^the basket weighs (\d+) kg$/) { }
+      RUBY
+
+      expect(best_lines_for('the basket weighs 2 kg')).to eq([2, 3])
+    end
+
+    it 'falls back to Approximate Matches when there is no exact one' do
+      write 'features/step_definitions/steps.rb', <<~'RUBY'
+        Given("I visit the #{PAGE} page") { }
+        Given('I visit the shop') { }
+      RUBY
+
+      expect(best_lines_for('I visit the home page')).to eq([1])
+    end
+
+    it 'takes the union over several texts, deduplicated, before picking the tier' do
+      write 'features/step_definitions/steps.rb', <<~'RUBY'
+        Given("I have #{N} pickles") { }
+        Given('I have {int} cucumber(s)') { }
+        Given('I have 1 cucumber') { }
+      RUBY
+
+      expect(best_lines_for('I have 1 cucumber', 'I have 2 cucumbers', 'I have 3 pickles')).to eq([2, 3])
+    end
+
+    it 'returns nothing for an Undefined Step' do
+      write 'features/step_definitions/steps.rb', "Given('fine') { }\n"
+
+      expect(best_lines_for('not fine')).to eq([])
+    end
+  end
+
   it 'isolates a definition that fails to compile' do
     write 'features/step_definitions/steps.rb', <<~'RUBY'
       Given(/^named (?<n>\d+)$/) { }
