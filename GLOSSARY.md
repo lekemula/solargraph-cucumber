@@ -16,6 +16,10 @@ placeholders such as `{int}` or `{string}`) or a regular expression.
 A named placeholder usable in a Cucumber Expression, such as `{int}`. Cucumber ships built-in Parameter Types, and
 projects define their own with `ParameterType(name:, regexp:, ...)`.
 
+**Approximate Match**
+A match between a Step and a Step Definition whose Step Expression or Parameter Type could only be read in part,
+for example because it is built at runtime. It may be wrong, so exact matches rank ahead of it.
+
 **Shadow Source**
 A Ruby source the plugin builds to stand in for a non-Ruby document, such as a `.feature` file, so that Solargraph's
 Ruby-only machinery can work with it.
