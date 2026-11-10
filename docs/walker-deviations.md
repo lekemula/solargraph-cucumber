@@ -34,3 +34,17 @@ files.
 the same crossing. The auto-registration also registers abstract bases such as `SpecWalker::BaseProcessor` as
 processors. Upstream could keep its no-wiring feel by having `SpecWalker::BaseProcessor` call `walked_by` for each
 subclass in an `inherited` hook.
+
+## 3. The Walker converts Parser nodes itself
+
+**Change.** `Walker.new` accepts a RuboCop AST, a Parser AST or a `Solargraph::Source`, and converts the tree to
+RuboCop nodes before walking. The conversion is the one solargraph-rspec keeps in `SpecWalker::NodeTypes.to_rubocop_ast`;
+it now lives as a private `Walker#to_rubocop_ast`, and the Step Definition index passes the Parser AST straight in.
+
+**Why.** Solargraph parses into plain `Parser::AST::Node`s, but processors use RuboCop node patterns and node helpers
+(`send_node`, `value`, `to_regexp`), so every walk needs the conversion. The index carried a private copy of it, and the
+Shadow Source walk would have needed another.
+
+**Upstream?** Yes. Both solargraph-rspec walkers (`SpecWalker` and `SpecConfigurationWalker`) call
+`NodeTypes.to_rubocop_ast` before walking; the generic Walker is the natural owner, and `NodeTypes` would keep only the
+RSpec-specific matchers.

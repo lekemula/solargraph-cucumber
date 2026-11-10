@@ -40,6 +40,31 @@ RSpec.describe Solargraph::Cucumber::Walker do
       expect(events).to eq(%i[step shadow])
     end
 
+    context 'with a source that is not a RuboCop AST' do
+      let(:entered) { [] }
+      let(:walker_class) do
+        entered_ref = entered
+        Class.new(described_class).tap do |walker_class|
+          Class.new(described_class::BaseProcessor) do
+            walked_by walker_class
+            on_node_pattern_enter('(block (send nil? $_ ...) ...)') { |n, name| entered_ref << [n.class, name] }
+          end
+        end
+      end
+
+      it 'walks a Parser AST as RuboCop nodes' do
+        walker_class.new(Solargraph::Parser.parse("Given('a') {}", 'steps.rb')).walk!
+
+        expect(entered).to eq([[RuboCop::AST::BlockNode, :Given]])
+      end
+
+      it 'walks a Solargraph source as RuboCop nodes' do
+        walker_class.new(Solargraph::Source.load_string("Given('a') {}", 'steps.rb')).walk!
+
+        expect(entered).to eq([[RuboCop::AST::BlockNode, :Given]])
+      end
+    end
+
     it 'runs after-walk handlers once the walk completes' do
       walker = described_class.new(parse('Given {}'))
       called = false

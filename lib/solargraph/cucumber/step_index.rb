@@ -126,7 +126,7 @@ module Solargraph
       # @param path [String]
       # @return [Array(Array<StepDefinition>, Array<ParameterTypeDefinition>)]
       def walk(path)
-        walker = StepDefinitionWalker.new(rubocop_ast(Solargraph::Parser.parse(File.read(path), path)))
+        walker = StepDefinitionWalker.new(Solargraph::Parser.parse(File.read(path), path))
         walker.walk!
         [walker.context.fetch(:step_definitions, []), walker.context.fetch(:parameter_types, [])]
       rescue StandardError => e
@@ -170,14 +170,6 @@ module Solargraph
         !compiled.matcher.match(text).nil?
       rescue CE::AmbiguousParameterTypeError
         true
-      end
-
-      # @param node [::Parser::AST::Node, Object]
-      # @return [RuboCop::AST::Node, Object]
-      def rubocop_ast(node)
-        return node unless node.is_a?(::Parser::AST::Node)
-
-        RuboCop::AST::Builder.new.n(node.type, node.children.map { |child| rubocop_ast(child) }, node.loc)
       end
     end
   end

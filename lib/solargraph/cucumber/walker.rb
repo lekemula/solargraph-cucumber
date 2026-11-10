@@ -19,9 +19,9 @@ module Solargraph
         end
       end
 
-      # @param ast [RuboCop::AST::Node, nil]
-      def initialize(ast = nil)
-        @ast = ast
+      # @param source [RuboCop::AST::Node, ::Parser::AST::Node, Solargraph::Source, nil]
+      def initialize(source = nil)
+        @ast = to_rubocop_ast(source.is_a?(Solargraph::Source) ? source.node : source)
       end
 
       # @return [Hash]
@@ -46,6 +46,15 @@ module Solargraph
       end
 
       private
+
+      # Processors match with RuboCop node patterns and helpers, but Solargraph parses into plain Parser nodes.
+      # @param node [::Parser::AST::Node, Object]
+      # @return [RuboCop::AST::Node, Object]
+      def to_rubocop_ast(node)
+        return node if !node.is_a?(::Parser::AST::Node) || node.is_a?(::RuboCop::AST::Node)
+
+        ::RuboCop::AST::Builder.new.n(node.type, node.children.map { |child| to_rubocop_ast(child) }, node.loc)
+      end
 
       # @param node [RuboCop::AST::Node]
       # @return [void]
