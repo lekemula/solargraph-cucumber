@@ -27,6 +27,8 @@ Gem::Specification.new do |spec|
   spec.executables = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
   spec.require_paths = ['lib']
 
+  spec.add_dependency 'cucumber-cucumber-expressions', '> 17', '< 21'
+  spec.add_dependency 'cucumber-gherkin', '> 36', '< 43'
   spec.add_dependency 'rubocop-ast', '>= 1.0'
   spec.add_dependency 'solargraph', '>= 0.56.0'
 
