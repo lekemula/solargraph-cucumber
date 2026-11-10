@@ -7,6 +7,18 @@ RSpec.describe Solargraph::Cucumber::Convention do
     expect(conventions).to include(an_instance_of(described_class))
   end
 
+  describe '#transform_source' do
+    it 'turns a .feature file into its Shadow Source' do
+      code = described_class.new.transform_source('features/a.feature', "Feature: a\n  Scenario: b\n    Given c\n")
+
+      expect(code).to eq "module CucumberFeature;\n# Scenario: b\n    Given\"c\"\nend"
+    end
+
+    it 'leaves other files alone' do
+      expect(described_class.new.transform_source('features/a.md', 'Given c')).to be_nil
+    end
+  end
+
   describe '#local' do
     it 'returns an empty environ' do
       source_map = Solargraph::SourceMap.load_string('Given(/^a step$/) {}', 'features/step_definitions/steps.rb')
