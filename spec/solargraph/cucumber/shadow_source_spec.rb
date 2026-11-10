@@ -4,8 +4,8 @@ require 'solargraph/cucumber/shadow_source'
 
 # PROTOTYPE (proto-shadow-source)
 RSpec.describe Solargraph::Cucumber::ShadowSource do
-  def shadow(feature, **opts)
-    described_class.new(feature, **opts).code
+  def shadow(feature, namespace: false)
+    described_class.new(feature, namespace: namespace).code
   end
 
   # @param shadow [String]
@@ -162,7 +162,7 @@ RSpec.describe Solargraph::Cucumber::ShadowSource do
     let(:matches) { { 'the basket belongs to "Aslak"' => [location_a] } }
 
     it 'resolves a Step on Object' do
-      code = described_class.new(feature).code
+      code = described_class.new(feature, namespace: false).code
       pins = define_at(code, 3, 15, convention('Object', :instance, matches))
 
       expect(pins.map(&:location)).to eq [location_a]
@@ -176,7 +176,7 @@ RSpec.describe Solargraph::Cucumber::ShadowSource do
     end
 
     it 'returns one pin per Step Definition when a Step is ambiguous' do
-      code = described_class.new(feature).code
+      code = described_class.new(feature, namespace: false).code
       ambiguous = { 'the basket belongs to "Aslak"' => [location_a, location_b] }
       pins = define_at(code, 3, 15, convention('Object', :instance, ambiguous))
 
@@ -184,11 +184,33 @@ RSpec.describe Solargraph::Cucumber::ShadowSource do
     end
 
     it 'resolves nothing on the keyword or when the cursor is off the Step text' do
-      code = described_class.new(feature).code
+      code = described_class.new(feature, namespace: false).code
       conv = convention('Object', :instance, matches)
 
       expect(define_at(code, 3, 5, conv).map(&:location)).not_to include(location_a)
       expect(define_at(code, 1, 10, conv)).to be_empty
+    end
+
+    it 'resolves a Step through the core source-transformer hook, from the raw feature text' do
+      hook = Solargraph::Convention::Base.method_defined?(:transform_source)
+      skip 'needs solargraph sg-source-transformer' unless hook
+
+      transformer = Class.new(Solargraph::Convention::Base) do
+        def transform_source(filename, code)
+          Solargraph::Cucumber::ShadowSource.new(code).code if filename.end_with?('.feature')
+        end
+      end
+      Solargraph::Convention.register transformer
+      conv = convention('CucumberFeature', :class, matches)
+      Solargraph::Convention.register conv
+      source = Solargraph::Source.load_string(feature, 'x.feature')
+      pins = Solargraph::ApiMap.new.map(source).clip_at('x.feature', [3, 15]).define
+
+      expect(source.code).to start_with('module CucumberFeature;')
+      expect(pins.map(&:location)).to eq [location_a]
+    ensure
+      Solargraph::Convention.unregister transformer if transformer
+      Solargraph::Convention.unregister conv if conv
     end
   end
 end

@@ -24,7 +24,7 @@ module Solargraph
 
       # @param feature [String] the `.feature` text
       # @param namespace [Boolean] wrap the Steps in `module CucumberFeature`, opened on the `Feature:` line
-      def initialize(feature, namespace: false)
+      def initialize(feature, namespace: true)
         @feature = feature
         @namespace = namespace
         @code = transform
