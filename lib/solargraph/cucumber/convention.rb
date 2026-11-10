@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative 'walker'
-require_relative 'shadow_source'
+require_relative 'shadow_source_walker'
 
 module Solargraph
   module Cucumber
