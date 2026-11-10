@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative 'walker'
+
 module Solargraph
   module Cucumber
     # Links Cucumber steps to their step definitions.
