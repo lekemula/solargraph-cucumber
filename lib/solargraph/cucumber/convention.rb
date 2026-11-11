@@ -33,7 +33,7 @@ module Solargraph
         filename = source_map.filename
         return EMPTY_ENVIRON unless filename&.end_with?('.feature')
 
-        feature = original_code(source_map.source)
+        feature = source_map.source.original_code
         Environ.new(pins: [namespace_pin, *keyword_method_pins(feature), *factory_parameters(source_map, feature)])
       end
 
@@ -47,14 +47,6 @@ module Solargraph
 
         root = features.dirname.to_s
         (@step_indexes ||= {})[root] ||= StepIndex.new(root)
-      end
-
-      # Core keeps the text a convention transformed only privately. Switch to the public reader once the ticket
-      # "How do we keep Ruby diagnostics and formatting off .feature files?" adds `Source#original_code`.
-      # @param source [Source]
-      # @return [String]
-      def original_code(source)
-        source.instance_variable_get(:@original_code) || source.code
       end
 
       # @return [Pin::Namespace]
