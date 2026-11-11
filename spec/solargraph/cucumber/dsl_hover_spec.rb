@@ -63,20 +63,20 @@ RSpec.describe 'Hover on the Cucumber DSL in a step file' do
   RUBY
 
   %w[Given When Then And But].each_with_index do |keyword, line|
-    it "documents #{keyword} as defining a Step Definition" do
-      expect(hover('features/step_definitions/steps.rb', steps, line, 1)).to include(
-        "`#{keyword}(expression) { |*args| … }` — defines a Step Definition.",
-        'Cucumber matches Steps by text only: a Step Definition defined with `Given` also matches `When`, `Then`, ' \
-        '`And`, `But` and `*` Steps.'
-      )
+    it "documents #{keyword} with cucumber-ruby's docs of the method it aliases" do
+      text = hover('features/step_definitions/steps.rb', steps, line, 1)
+
+      expect(text).to include('Registers a new Ruby StepDefinition. This method is aliased')
     end
   end
 
-  it 'defines a Step keyword where its docs live' do
+  it 'defines a Step keyword as the Cucumber method it aliases' do
     result = request(Solargraph::LanguageServer::Message::TextDocument::Definition,
                      'features/step_definitions/steps.rb', steps, 0, 1)
 
-    docs = File.expand_path('../../../lib/solargraph/cucumber/step_keyword.rb', __dir__)
-    expect(result.map { |location| location[:uri] }).to eq [Solargraph::LanguageServer::UriHelpers.file_to_uri(docs)]
+    dsl = File.join(Gem::Specification.find_by_name('cucumber').full_gem_path, 'lib/cucumber/glue/dsl.rb')
+    expect(result.map { |location| location[:uri] }).to eq [Solargraph::LanguageServer::UriHelpers.file_to_uri(dsl)]
+    target = File.readlines(dsl)[result.first[:range][:start][:line]]
+    expect(target).to include('def register_rb_step_definition(regexp, symbol')
   end
 end

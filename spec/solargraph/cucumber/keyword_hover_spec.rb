@@ -47,7 +47,6 @@ RSpec.describe 'Hover on a Step keyword' do
       text = hover(feature, line, 4)
 
       expect(text).to include('Registers a new Ruby StepDefinition. This method is aliased')
-      expect(text).not_to include("**#{keyword}** Step", 'defines a Step Definition')
     end
   end
 

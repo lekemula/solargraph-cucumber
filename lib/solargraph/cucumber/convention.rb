@@ -63,11 +63,10 @@ module Solargraph
       # @return [Array<Pin::Method>] the English Step keywords of the DSL, which Cucumber defines at runtime
       def definition_keyword_pins
         closure = Pin::Namespace.new(name: DSL, type: :module, closure: Pin::ROOT_PIN)
-        file, line = StepKeyword.const_source_location(:DEFINITION_DOCS)
-        location = Location.new(file, Range.from_to(line - 1, 0, line - 1, 0))
-        StepKeyword::DEFINITION_DOCS.map do |keyword, docs|
-          Pin::Method.new(name: keyword, closure: closure, scope: :instance, visibility: :public, comments: docs,
-                          location: location).tap do |pin|
+        dsl = step_definition_pin
+        StepKeyword::DEFINITION.map do |keyword|
+          Pin::Method.new(name: keyword, closure: closure, scope: :instance, visibility: :public,
+                          comments: dsl&.comments, location: dsl&.location).tap do |pin|
             pin.parameters.push Pin::Parameter.new(name: 'expression', closure: pin),
                                 Pin::Parameter.new(name: 'block', decl: :blockarg, closure: pin)
           end
@@ -96,7 +95,7 @@ module Solargraph
         language = 'en' unless Gherkin::DIALECTS.key?(language)
         ShadowSource.step_keywords(Gherkin::Dialect.for(language)).map do |keyword|
           name = ShadowSource.method_name(keyword)
-          dsl = step_definition_pin if StepKeyword::DEFINITION_DOCS.key?(keyword.strip)
+          dsl = step_definition_pin if StepKeyword::DEFINITION.include?(keyword.strip)
           Pin::Method.new(name: name, closure: namespace_pin, scope: :class, visibility: :public,
                           comments: dsl&.comments || StepKeyword::DOCS[keyword.strip],
                           location: dsl&.location).tap do |pin|
