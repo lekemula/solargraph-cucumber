@@ -17,16 +17,16 @@ module Solargraph
     end
     STEP_KEYWORDS = (keywords.uniq - ['* ']).to_set { |kw| kw.gsub(/[\s',!]/, '').to_sym }
 
-    # @!attribute keyword [Symbol] the DSL method it was defined with; plays no part in matching
-    # @!attribute expression [String, Regexp] String = Cucumber Expression, Regexp = regular expression
-    # @!attribute approximate [Boolean] built from an interpolated literal
-    # @!attribute location [Solargraph::Location]
+    # @param keyword [Symbol] the DSL method it was defined with; plays no part in matching
+    # @param expression [String, Regexp] String = Cucumber Expression, Regexp = regular expression
+    # @param approximate [Boolean] built from an interpolated literal
+    # @param location [Solargraph::Location]
     StepDefinition = Struct.new(:keyword, :expression, :approximate, :location, keyword_init: true)
 
-    # @!attribute name [String]
-    # @!attribute regexps [Array<Regexp, String>]
-    # @!attribute approximate [Boolean] regexp was not a literal, so a placeholder stands in
-    # @!attribute location [Solargraph::Location]
+    # @param name [String]
+    # @param regexps [Array<Regexp, String>]
+    # @param approximate [Boolean] regexp was not a literal, so a placeholder stands in
+    # @param location [Solargraph::Location]
     ParameterTypeDefinition = Struct.new(:name, :regexps, :approximate, :location, keyword_init: true)
 
     # Turns the first argument of a Step Definition into a Step Expression.
@@ -63,8 +63,9 @@ module Solargraph
       CE = ::Cucumber::CucumberExpressions
       NOOP = ->(*args) { args }
 
-      # @!attribute step_definition [StepDefinition]
-      # @!attribute matcher [CE::CucumberExpression, CE::RegularExpression]
+      # @param step_definition [StepDefinition]
+      # @param matcher [CE::CucumberExpression, CE::RegularExpression]
+      # @param approximate [Boolean]
       Compiled = Struct.new(:step_definition, :matcher, :approximate)
 
       # @return [Array<Array(StepDefinition, Exception)>] Step Definitions that failed to compile

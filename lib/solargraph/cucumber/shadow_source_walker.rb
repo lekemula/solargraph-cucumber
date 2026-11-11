@@ -5,9 +5,9 @@ require_relative 'shadow_source'
 
 module Solargraph
   module Cucumber
-    # @!attribute method_name [String] the keyword method the Step calls in the Shadow Source, e.g. `And`
-    # @!attribute text [String] the Step text, exactly as written in the `.feature` file
-    # @!attribute location [Solargraph::Location] where the Step text sits
+    # @param method_name [String] the keyword method the Step calls in the Shadow Source, e.g. `And`
+    # @param text [String] the Step text, exactly as written in the `.feature` file
+    # @param location [Solargraph::Location] where the Step text sits
     Step = Struct.new(:method_name, :text, :location, keyword_init: true)
 
     # Walks a Shadow Source with the Shadow Source processors only.
