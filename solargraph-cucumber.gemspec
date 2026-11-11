@@ -11,7 +11,7 @@ Gem::Specification.new do |spec|
   spec.summary = 'Solargraph plugin supporting Cucumber step navigation'
   spec.description = 'This plugin links Cucumber steps in feature files to their Ruby step definitions in Solargraph.'
   spec.license = 'MIT'
-  spec.required_ruby_version = '>= 3.0'
+  spec.required_ruby_version = '>= 3.2'
 
   spec.metadata['source_code_uri'] = 'https://github.com/lekemula/solargraph-cucumber'
 
