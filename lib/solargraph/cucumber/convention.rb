@@ -57,7 +57,21 @@ module Solargraph
       # Cucumber loads step files itself, so they rarely require `cucumber`; the require loads the gem's docs.
       # @return [Environ]
       def step_file_environ
-        @step_file_environ ||= Environ.new(requires: ['cucumber'], domains: [DSL])
+        @step_file_environ ||= Environ.new(requires: ['cucumber'], domains: [DSL], pins: definition_keyword_pins)
+      end
+
+      # @return [Array<Pin::Method>] the English Step keywords of the DSL, which Cucumber defines at runtime
+      def definition_keyword_pins
+        closure = Pin::Namespace.new(name: DSL, type: :module, closure: Pin::ROOT_PIN)
+        file, line = StepKeyword.const_source_location(:DEFINITION_DOCS)
+        location = Location.new(file, Range.from_to(line - 1, 0, line - 1, 0))
+        StepKeyword::DEFINITION_DOCS.map do |keyword, docs|
+          Pin::Method.new(name: keyword, closure: closure, scope: :instance, visibility: :public, comments: docs,
+                          location: location).tap do |pin|
+            pin.parameters.push Pin::Parameter.new(name: 'expression', closure: pin),
+                                Pin::Parameter.new(name: 'block', decl: :blockarg, closure: pin)
+          end
+        end
       end
 
       # @param filename [String]

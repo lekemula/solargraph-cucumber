@@ -53,4 +53,30 @@ RSpec.describe 'Hover on the Cucumber DSL in a step file' do
       expect(hover('features/support/hooks.rb', hooks, line, 2)).to include(text)
     end
   end
+
+  steps = <<~RUBY
+    Given('a') { }
+    When('b') { }
+    Then('c') { }
+    And('d') { }
+    But('e') { }
+  RUBY
+
+  %w[Given When Then And But].each_with_index do |keyword, line|
+    it "documents #{keyword} as defining a Step Definition" do
+      expect(hover('features/step_definitions/steps.rb', steps, line, 1)).to include(
+        "`#{keyword}(expression) { |*args| … }` — defines a Step Definition.",
+        'Cucumber matches Steps by text only: a Step Definition defined with `Given` also matches `When`, `Then`, ' \
+        '`And`, `But` and `*` Steps.'
+      )
+    end
+  end
+
+  it 'defines a Step keyword where its docs live' do
+    result = request(Solargraph::LanguageServer::Message::TextDocument::Definition,
+                     'features/step_definitions/steps.rb', steps, 0, 1)
+
+    docs = File.expand_path('../../../lib/solargraph/cucumber/step_keyword.rb', __dir__)
+    expect(result.map { |location| location[:uri] }).to eq [Solargraph::LanguageServer::UriHelpers.file_to_uri(docs)]
+  end
 end
