@@ -15,7 +15,13 @@ gem 'rubocop-yard'        # YARD documentation linting
 gem 'simplecov'           # Code coverage
 gem 'simplecov-cobertura' # Code coverage
 
-# The solargraph `cucumber` integration branch, which carries the core changes this plugin needs;
-# override with SOLARGRAPH_PATH
-gem 'solargraph',
-    path: ENV.fetch('SOLARGRAPH_PATH', File.expand_path('~/Projects/open_source/solargraph__worktrees/cucumber'))
+# Solargraph with the unreleased core changes this plugin needs (castwide/solargraph#1489): a local checkout of
+# the `cucumber` branch when there is one (or SOLARGRAPH_PATH), else that branch on GitHub
+solargraph_path = ENV.fetch('SOLARGRAPH_PATH') do
+  File.expand_path('~/Projects/open_source/solargraph__worktrees/cucumber')
+end
+if Dir.exist?(solargraph_path)
+  gem 'solargraph', path: solargraph_path
+else
+  gem 'solargraph', github: 'lekemula/solargraph', branch: 'cucumber'
+end

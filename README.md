@@ -57,8 +57,12 @@ RuboCop reads this from the `.rubocop.yml` of the directory Solargraph runs in, 
 
 After checking out the repo, run `bundle install`, then `bundle exec rake` to run the specs and RuboCop.
 
-The `Gemfile` points `solargraph` at a local checkout in `~/Projects/open_source/solargraph`.
-Set `SOLARGRAPH_PATH` to use another one.
+The `Gemfile` takes `solargraph` from the `cucumber` branch of
+[lekemula/solargraph](https://github.com/lekemula/solargraph/tree/cucumber) (castwide/solargraph#1489). Set
+`SOLARGRAPH_PATH` to use a local checkout of it instead.
+
+The end-to-end specs run against the sandbox project in `~/Projects/open_source/cucumber-sandbox` and are skipped
+without it; set `CUCUMBER_SANDBOX` to point them elsewhere.
 
 ## Contributing
 
