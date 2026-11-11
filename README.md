@@ -76,6 +76,12 @@ The `Gemfile` takes `solargraph` from the `cucumber` branch of
 [lekemula/solargraph](https://github.com/lekemula/solargraph/tree/cucumber) (castwide/solargraph#1489). Set
 `SOLARGRAPH_PATH` to use a local checkout of it instead.
 
+The specs in `spec/lsp` (tagged `:lsp`) start a real `solargraph stdio` server over the project in
+`spec/fixtures/cucumber_project`, which loads the plugin from its `.solargraph.yml` as a user's project does. To ask
+a server what it answers at a position in any project, run
+`ruby script/lsp_probe.rb <project_root> <relpath> <line0> <col0>` (`OPEN_FIRST=a.feature,b.feature` opens more
+documents first).
+
 The end-to-end specs run against the sandbox project in `~/Projects/open_source/cucumber-sandbox` and are skipped
 without it; set `CUCUMBER_SANDBOX` to point them elsewhere.
 

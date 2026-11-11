@@ -1,3 +1,6 @@
+require:
+  - ./rubocop/cop/solargraph_cucumber/struct_param_tags
+
 plugins:
   - rubocop-yard
 
