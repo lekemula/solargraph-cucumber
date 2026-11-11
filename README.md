@@ -9,6 +9,11 @@ This gem adds Cucumber support to Solargraph:
   - go to definition from a step in a `.feature` file to its Ruby step definition
   - and more to come... ⏲️
 
+## Demo
+
+https://github.com/user-attachments/assets/ca371bf8-d694-4d82-8823-39cf3d79b44f
+
+
 ## Installation
 
 Add it to your Gemfile. Until castwide/solargraph#1489 is released, take Solargraph from its branch:
