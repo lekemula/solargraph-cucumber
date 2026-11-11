@@ -37,6 +37,18 @@ module Solargraph
         dialects.flat_map { |d| step_keywords(d) }.map { method_name(_1) }.uniq
       end
 
+      # @param feature [String] the `.feature` text
+      # @return [String, nil] the `# language:` the feature declares
+      def self.language(feature)
+        feature.each_line do |line|
+          next if line.strip.empty?
+          return Regexp.last_match(1) if line =~ /\A\s*#\s*language\s*:\s*([\w-]+)/
+
+          return nil unless line.lstrip.start_with?('#')
+        end
+        nil
+      end
+
       # @param keyword [String] a dialect keyword such as `"Gegeben sei "` or `"Etant donné qu'"`
       # @return [String] the keyword without its last char, identifier-safe
       def self.method_name(keyword)
@@ -53,7 +65,7 @@ module Solargraph
 
       def transform
         lines = @feature.split("\n", -1)
-        dialect = Gherkin::Dialect.for(language(lines)) || Gherkin::Dialect.for('en')
+        dialect = Gherkin::Dialect.for(self.class.language(@feature)) || Gherkin::Dialect.for('en')
         keywords = self.class.step_keywords(dialect).sort_by { -_1.length }
         feature_keywords = dialect.feature_keywords.map { "#{_1}:" }
         doc_string = nil
@@ -83,16 +95,6 @@ module Solargraph
         end
 
         out.join("\n") + (opened ? closer : '')
-      end
-
-      def language(lines)
-        lines.each do |line|
-          next if line.strip.empty?
-          return Regexp.last_match(1) if line =~ /\A\s*#\s*language\s*:\s*([\w-]+)/
-
-          return nil unless line.lstrip.start_with?('#')
-        end
-        nil
       end
 
       def comment(line)
