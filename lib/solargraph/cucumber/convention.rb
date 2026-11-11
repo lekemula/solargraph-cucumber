@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'gherkin'
 require_relative 'shadow_source_walker'
 require_relative 'step_index'
 
@@ -32,10 +33,8 @@ module Solargraph
         filename = source_map.filename
         return EMPTY_ENVIRON unless filename&.end_with?('.feature')
 
-        index = step_index(filename)
-        steps = ShadowSourceWalker.new(source_map.source).steps
-        parameters = index ? steps.flat_map { |step| factory_parameters(step, index.best_matches(step.text)) } : []
-        Environ.new(pins: [namespace_pin, *keyword_method_pins(original_code(source_map.source))] + parameters)
+        feature = original_code(source_map.source)
+        Environ.new(pins: [namespace_pin, *keyword_method_pins(feature), *factory_parameters(source_map, feature)])
       end
 
       private
@@ -75,22 +74,67 @@ module Solargraph
         end
       end
 
-      # @param step [Step]
-      # @param step_definitions [Array<StepDefinition>]
+      # Chain::Parameter looks a Step's pins up by method and text, so a Step written twice needs its pins once.
+      # @param source_map [SourceMap]
+      # @param feature [String]
       # @return [Array<Pin::FactoryParameter>]
-      def factory_parameters(step, step_definitions)
-        step_definitions.map do |step_definition|
-          Pin::FactoryParameter.new(
-            method_name: step.method_name,
-            method_namespace: ShadowSource::NAMESPACE,
-            method_scope: :class,
-            param_name: PARAM_NAME,
-            decl: :arg,
-            value: step.text,
-            location: step_definition.location,
-            return_type: nil
-          )
+      def factory_parameters(source_map, feature)
+        index = step_index(source_map.filename)
+        return [] unless index
+
+        texts = expanded_texts(source_map.filename, feature)
+        pins = ShadowSourceWalker.new(source_map.source).steps.flat_map do |step|
+          step_definitions = index.best_matches(*texts.fetch(step.location.range.start.line + 1, [step.text]))
+          step_definitions.map { |step_definition| factory_parameter(step, step_definition) }
         end
+        pins.uniq { |pin| [pin.method_name, pin.value, pin.location] }
+      end
+
+      # Outline Steps expand once per Examples row; other Steps keep their text.
+      # @param filename [String]
+      # @param feature [String]
+      # @return [Hash{Integer => Array<String>}] the Pickle texts of each Step, by 1-based line
+      def expanded_texts(filename, feature)
+        envelopes = Gherkin.from_source(filename, feature, include_source: false, include_gherkin_document: true,
+                                                           include_pickles: true).to_a
+        document = envelopes.find(&:gherkin_document)&.gherkin_document
+        return {} unless document&.feature
+
+        step_lines = {}
+        each_step(document.feature.children) { |step| step_lines[step.id] = step.location.line }
+        texts = Hash.new { |hash, line| hash[line] = [] }
+        envelopes.filter_map(&:pickle).each do |pickle|
+          pickle.steps.each do |pickle_step|
+            texts[step_lines.fetch(pickle_step.ast_node_ids.first)] << pickle_step.text
+          end
+        end
+        texts.transform_values(&:uniq)
+      end
+
+      # @param children [Array<Cucumber::Messages::FeatureChild, Cucumber::Messages::RuleChild>]
+      # @yieldparam [Cucumber::Messages::Step]
+      # @return [void]
+      def each_step(children, &block)
+        children.each do |child|
+          each_step(child.rule.children, &block) if child.respond_to?(:rule) && child.rule
+          (child.scenario || child.background)&.steps&.each(&block)
+        end
+      end
+
+      # @param step [Step]
+      # @param step_definition [StepDefinition]
+      # @return [Pin::FactoryParameter]
+      def factory_parameter(step, step_definition)
+        Pin::FactoryParameter.new(
+          method_name: step.method_name,
+          method_namespace: ShadowSource::NAMESPACE,
+          method_scope: :class,
+          param_name: PARAM_NAME,
+          decl: :arg,
+          value: step.text,
+          location: step_definition.location,
+          return_type: nil
+        )
       end
     end
   end

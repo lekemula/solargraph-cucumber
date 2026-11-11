@@ -105,6 +105,39 @@ RSpec.describe Solargraph::Cucumber::Convention do
       expect(definitions_at(feature, 3, 15)).to eq []
       expect(definitions_at(feature, 4, 15)).to eq ['steps.rb:4']
     end
+
+    it 'defines an Outline Step as the union of its Examples rows, exact matches first' do
+      write 'features/step_definitions/steps.rb', <<~'RUBY'
+        Given('I have {int} cucumbers') { }
+        Given('I have many cucumbers') { }
+        Given("I have #{AMOUNT} cucumbers") { }
+        Given('I have <start> cucumbers in a jar') { }
+      RUBY
+      feature = write 'features/x.feature', <<~GHERKIN
+        Feature: x
+          Scenario Outline: y
+            Given I have <start> cucumbers
+
+            Examples:
+              | start |
+              | 3     |
+              | many  |
+              | 3     |
+
+          Scenario Outline: z
+            Given I have <start> cucumbers in a jar
+      GHERKIN
+
+      expect(definitions_at(feature, 2, 15)).to eq ['steps.rb:1', 'steps.rb:2']
+      expect(definitions_at(feature, 11, 15)).to eq ['steps.rb:4']
+    end
+
+    it 'defines a Step written twice once' do
+      write 'features/step_definitions/steps.rb', "Given('a') { }\n"
+      feature = write 'features/x.feature', "Feature: x\n  Scenario: y\n    Given a\n    Given a\n"
+
+      expect(definitions_at(feature, 3, 10)).to eq ['steps.rb:1']
+    end
   end
 
   describe '#global' do
