@@ -3,6 +3,7 @@
 require 'gherkin'
 require_relative 'shadow_source_walker'
 require_relative 'step_index'
+require_relative 'step_keyword'
 
 module Solargraph
   module Cucumber
@@ -59,8 +60,10 @@ module Solargraph
       def keyword_method_pins(feature)
         language = ShadowSource.language(feature)
         language = 'en' unless Gherkin::DIALECTS.key?(language)
-        ShadowSource.keyword_methods(language).map do |name|
-          Pin::Method.new(name: name, closure: namespace_pin, scope: :class, visibility: :public).tap do |pin|
+        ShadowSource.step_keywords(Gherkin::Dialect.for(language)).map do |keyword|
+          name = ShadowSource.method_name(keyword)
+          Pin::Method.new(name: name, closure: namespace_pin, scope: :class, visibility: :public,
+                          comments: StepKeyword::DOCS[keyword.strip]).tap do |pin|
             pin.parameters.push Pin::Parameter.new(name: PARAM_NAME, closure: pin)
           end
         end
