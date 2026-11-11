@@ -1,21 +1,29 @@
 # Solargraph::Cucumber - A [Solargraph](https://solargraph.org/) plugin for [Cucumber](https://cucumber.io/) support
 
 > [!WARNING]
-> Work in progress. The plugin registers itself with Solargraph but does not provide any features yet.
+> Work in progress. The plugin depends on Solargraph changes that are not released yet:
+> [castwide/solargraph#1489](https://github.com/castwide/solargraph/pull/1489). Until it is merged, use Solargraph from
+> that branch, as shown below.
 
-This gem aims to add Cucumber support to Solargraph:
+This gem adds Cucumber support to Solargraph:
   - go to definition from a step in a `.feature` file to its Ruby step definition
   - and more to come... ⏲️
 
 ## Installation
 
-Add it to your Gemfile:
+Add it to your Gemfile. Until castwide/solargraph#1489 is released, take Solargraph from its branch:
 
 ```ruby
 group :development do
-  gem 'solargraph', require: false
-  gem 'solargraph-cucumber', require: false
+  gem 'solargraph', github: 'lekemula/solargraph', branch: 'cucumber', require: false
+  gem 'solargraph-cucumber', github: 'lekemula/solargraph-cucumber', require: false
 end
+```
+
+Your editor's Solargraph client must also send `.feature` buffers to the server. In Neovim:
+
+```lua
+vim.lsp.config('solargraph', { filetypes = { 'ruby', 'cucumber' } })
 ```
 
 Add `solargraph-cucumber` to your `.solargraph.yml` as a plugin, and include your feature files in the workspace. An
