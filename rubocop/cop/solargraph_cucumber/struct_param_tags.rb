@@ -6,7 +6,10 @@ module RuboCop
   module Cop
     module SolargraphCucumber
       # Solargraph types the members of a `Struct.new` or `Data.define` assignment from `@param` tags on the
-      # assignment's comment and ignores `@!attribute` there, so document the members with `@param`.
+      # assignment's comment and ignores `@!attribute` there, so document the members with `@param`. YARD reads
+      # `@param` there too (https://github.com/lsegal/yard/issues/1684).
+      #
+      # Replace with rubocop-yard's `YARD/StructParamTag` once https://github.com/ksss/rubocop-yard/pull/46 is released.
       #
       # @example
       #   # bad
