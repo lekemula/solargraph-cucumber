@@ -1,8 +1,5 @@
 # frozen_string_literal: true
 
-require 'solargraph/cucumber/shadow_source'
-
-# PROTOTYPE (proto-shadow-source)
 RSpec.describe Solargraph::Cucumber::ShadowSource do
   def shadow(feature, namespace: false)
     described_class.new(feature, namespace: namespace).code
@@ -11,16 +8,8 @@ RSpec.describe Solargraph::Cucumber::ShadowSource do
   # @param shadow [String]
   # @return [Array<Array(String, Integer)>] each Step's raw text and start column, read back from the Shadow Source
   def steps_of(shadow)
-    ast = Solargraph::Parser.parse(shadow, 'x.feature')
-    nodes = []
-    walk = lambda do |node|
-      next unless node.is_a?(Parser::AST::Node)
-
-      nodes << node.children[2] if node.type == :send && node.children[2]&.type == :str
-      node.children.each(&walk)
-    end
-    walk.call(ast)
-    nodes.map { |str| [shadow[str.loc.begin.end_pos...str.loc.end.begin_pos], str.loc.begin.last_column] }
+    Solargraph::Cucumber::ShadowSourceWalker.new(Solargraph::Source.new(shadow, 'x.feature')).steps
+                                            .map { |step| [step.text, step.location.range.start.column] }
   end
 
   describe 'transform' do
@@ -76,7 +65,7 @@ RSpec.describe Solargraph::Cucumber::ShadowSource do
     end
 
     it 'parses as Ruby and gives back every Step text at its original column' do
-      expect(steps_of(shadow(feature))).to eq [
+      expect(steps_of(shadow(feature, namespace: true))).to eq [
         ['I have 3 cukes', 10],
         ['I eat 1 cuke', 6],
         ['the basket belongs to "Aslak"', 8],
