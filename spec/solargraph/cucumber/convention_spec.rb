@@ -46,6 +46,14 @@ RSpec.describe Solargraph::Cucumber::Convention do
       expect(described_class.new.local(source_map)).to eq(Solargraph::Convention::Base::EMPTY_ENVIRON)
     end
 
+    it 'returns an empty environ for a feature file loaded before the convention registered' do
+      Solargraph::Convention.unregister described_class
+      source_map = Solargraph::SourceMap.load_string("Feature: a\n  Scenario: b\n    Given c\n", 'features/a.feature')
+      Solargraph::Convention.register described_class
+
+      expect(described_class.new.local(source_map)).to eq(Solargraph::Convention::Base::EMPTY_ENVIRON)
+    end
+
     it 'defines a Step as its Step Definition' do
       write 'features/step_definitions/steps.rb', <<~RUBY
         Given('I have {int} cucumber(s)') { }

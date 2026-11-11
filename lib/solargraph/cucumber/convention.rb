@@ -31,7 +31,7 @@ module Solargraph
       # @return [Environ]
       def local(source_map)
         filename = source_map.filename
-        return EMPTY_ENVIRON unless filename&.end_with?('.feature')
+        return EMPTY_ENVIRON unless filename&.end_with?('.feature') && source_map.source.transformed?
 
         feature = source_map.source.original_code
         Environ.new(pins: [namespace_pin, *keyword_method_pins(feature), *factory_parameters(source_map, feature)])
