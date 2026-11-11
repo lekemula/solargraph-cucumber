@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# PROTOTYPE: run the StepIndex against a Cucumber project and diff it with
+# Runs the StepIndex against a Cucumber project and diffs it with
 # `cucumber -P -f usage --dry-run` output.
 #
 #   bundle exec ruby script/prototype_step_index.rb ~/Projects/open_source/cucumber-sandbox ground_truth.txt

@@ -3,7 +3,7 @@
 module Solargraph
   module Cucumber
     module NodeProcessors
-      # PROTOTYPE: records `ParameterType(name: 'color', regexp: /red|green/, ...)`.
+      # Records `ParameterType(name: 'color', regexp: /red|green/, ...)`.
       class ParameterTypeProcessor < Walker::BaseProcessor
         walked_by StepDefinitionWalker
         on_node_pattern_enter <<~PATTERN, :record

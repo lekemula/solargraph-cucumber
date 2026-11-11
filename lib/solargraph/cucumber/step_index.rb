@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-# PROTOTYPE (proto-step-index): Step Definition index built from Walker processors.
-
 require 'gherkin/dialect'
 require 'cucumber/cucumber_expressions/parameter_type_registry'
 require 'cucumber/cucumber_expressions/parameter_type'

@@ -4,7 +4,7 @@ require 'gherkin/dialect'
 
 module Solargraph
   module Cucumber
-    # PROTOTYPE (proto-shadow-source): turns `.feature` text into a column-preserving Ruby Shadow Source.
+    # Turns `.feature` text into a column-preserving Ruby Shadow Source.
     #
     # Every Step line becomes a keyword method call whose string literal starts at the Step text's first column:
     #
