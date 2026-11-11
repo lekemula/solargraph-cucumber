@@ -18,12 +18,19 @@ group :development do
 end
 ```
 
-Add `solargraph-cucumber` to your `.solargraph.yml` as a plugin:
+Add `solargraph-cucumber` to your `.solargraph.yml` as a plugin, and include your feature files in the workspace. An
+`include` replaces Solargraph's default, so keep `**/*.rb` in it:
 
 ```yaml
+include:
+  - "**/*.rb"
+  - "features/**/*.feature"
 plugins:
   - solargraph-cucumber
 ```
+
+Feature files outside the workspace `include` are not supported: with more than one of them open, Solargraph can
+lose track of the one you navigate from and return no definition.
 
 ### Keep RuboCop off `.feature` files
 
