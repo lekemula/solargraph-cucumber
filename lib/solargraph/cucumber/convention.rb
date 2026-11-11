@@ -14,6 +14,7 @@ module Solargraph
     # go-to-definition on the Step text jumps to the Step Definition.
     class Convention < Solargraph::Convention::Base
       PARAM_NAME = 'text'
+      DSL = 'Cucumber::Glue::Dsl'
 
       # @param filename [String]
       # @param code [String]
@@ -32,6 +33,7 @@ module Solargraph
       # @return [Environ]
       def local(source_map)
         filename = source_map.filename
+        return step_file_environ if step_file?(filename)
         return EMPTY_ENVIRON unless filename&.end_with?('.feature') && source_map.source.transformed?
 
         feature = source_map.source.original_code
@@ -40,10 +42,28 @@ module Solargraph
 
       private
 
+      # @param filename [String, nil]
+      # @return [Boolean] a Ruby file under a `features` directory, such as a step definition or support file
+      def step_file?(filename)
+        !!filename&.end_with?('.rb') && !features_dir(filename).nil?
+      end
+
+      # @param filename [String]
+      # @return [Pathname, nil] the nearest `features` directory above the file
+      def features_dir(filename)
+        Pathname.new(File.expand_path(filename)).ascend.find { |dir| dir.basename.to_s == 'features' }
+      end
+
+      # Cucumber loads step files itself, so they rarely require `cucumber`; the require loads the gem's docs.
+      # @return [Environ]
+      def step_file_environ
+        @step_file_environ ||= Environ.new(requires: ['cucumber'], domains: [DSL])
+      end
+
       # @param filename [String]
       # @return [StepIndex, nil] nil when the file is not under a `features` directory
       def step_index(filename)
-        features = Pathname.new(File.expand_path(filename)).ascend.find { |dir| dir.basename.to_s == 'features' }
+        features = features_dir(filename)
         return unless features
 
         root = features.dirname.to_s

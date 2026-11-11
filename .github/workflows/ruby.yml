@@ -35,5 +35,9 @@ jobs:
       - name: Run RuboCop
         run: bundle exec rubocop
 
+      # The step file hover specs read Cucumber's DSL docs from Solargraph's gem cache
+      - name: Cache Cucumber's documentation
+        run: bundle exec solargraph gems cucumber
+
       - name: Run tests
         run: bundle exec rspec --format progress
