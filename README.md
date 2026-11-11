@@ -25,6 +25,19 @@ plugins:
   - solargraph-cucumber
 ```
 
+### Keep RuboCop off `.feature` files
+
+Solargraph reads a `.feature` file as generated Ruby code. It does not typecheck or format that code, but its `rubocop`
+reporter lints it unless your `.rubocop.yml` excludes feature files:
+
+```yaml
+AllCops:
+  Exclude:
+    - '**/*.feature'
+```
+
+RuboCop reads this from the `.rubocop.yml` of the directory Solargraph runs in, usually the project root.
+
 ## Development
 
 After checking out the repo, run `bundle install`, then `bundle exec rake` to run the specs and RuboCop.
