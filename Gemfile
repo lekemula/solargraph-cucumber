@@ -7,6 +7,7 @@ gemspec
 
 # Development Dependencies
 gem 'bundler'             # Dependency management
+gem 'cucumber'            # Its DSL docs, for step file hover specs
 gem 'debug'               # Debugging
 gem 'rake'                # Build
 gem 'rspec'               # Testing

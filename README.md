@@ -7,6 +7,10 @@
 
 This gem adds Cucumber support to Solargraph:
   - go to definition from a step in a `.feature` file to its Ruby step definition
+  - hover docs for step keywords (`Given`, `When`, `Then`, `And`, `But`, `*`) in `.feature` files, and go-to-definition
+    from `Given` to `But` to the Cucumber DSL method they alias
+  - hover docs for the Cucumber DSL (step keywords, `Before`/`After`/`Around`/`AfterStep`, `World`, `ParameterType`) in
+    Ruby files under `features/`
   - and more to come... ⏲️
 
 ## Demo
@@ -44,6 +48,12 @@ plugins:
 
 Feature files outside the workspace `include` are not supported: with more than one of them open, Solargraph can
 lose track of the one you navigate from and return no definition.
+
+Hover docs for the Cucumber DSL come from the `cucumber` gem, so it must be in your bundle with its docs cached:
+
+```sh
+bundle exec solargraph gems cucumber
+```
 
 ### Keep RuboCop off `.feature` files
 

@@ -3,6 +3,7 @@
 require 'gherkin'
 require_relative 'shadow_source_walker'
 require_relative 'step_index'
+require_relative 'step_keyword'
 
 module Solargraph
   module Cucumber
@@ -13,6 +14,7 @@ module Solargraph
     # go-to-definition on the Step text jumps to the Step Definition.
     class Convention < Solargraph::Convention::Base
       PARAM_NAME = 'text'
+      DSL = 'Cucumber::Glue::Dsl'
 
       # @param filename [String]
       # @param code [String]
@@ -31,6 +33,7 @@ module Solargraph
       # @return [Environ]
       def local(source_map)
         filename = source_map.filename
+        return step_file_environ if step_file?(filename)
         return EMPTY_ENVIRON unless filename&.end_with?('.feature') && source_map.source.transformed?
 
         feature = source_map.source.original_code
@@ -39,10 +42,41 @@ module Solargraph
 
       private
 
+      # @param filename [String, nil]
+      # @return [Boolean] a Ruby file under a `features` directory, such as a step definition or support file
+      def step_file?(filename)
+        !!filename&.end_with?('.rb') && !features_dir(filename).nil?
+      end
+
+      # @param filename [String]
+      # @return [Pathname, nil] the nearest `features` directory above the file
+      def features_dir(filename)
+        Pathname.new(File.expand_path(filename)).ascend.find { |dir| dir.basename.to_s == 'features' }
+      end
+
+      # Cucumber loads step files itself, so they rarely require `cucumber`; the require loads the gem's docs.
+      # @return [Environ]
+      def step_file_environ
+        @step_file_environ ||= Environ.new(requires: ['cucumber'], domains: [DSL], pins: definition_keyword_pins)
+      end
+
+      # @return [Array<Pin::Method>] the English Step keywords of the DSL, which Cucumber defines at runtime
+      def definition_keyword_pins
+        closure = Pin::Namespace.new(name: DSL, type: :module, closure: Pin::ROOT_PIN)
+        dsl = step_definition_pin
+        StepKeyword::DEFINITION.map do |keyword|
+          Pin::Method.new(name: keyword, closure: closure, scope: :instance, visibility: :public,
+                          comments: dsl&.comments, location: dsl&.location).tap do |pin|
+            pin.parameters.push Pin::Parameter.new(name: 'expression', closure: pin),
+                                Pin::Parameter.new(name: 'block', decl: :blockarg, closure: pin)
+          end
+        end
+      end
+
       # @param filename [String]
       # @return [StepIndex, nil] nil when the file is not under a `features` directory
       def step_index(filename)
-        features = Pathname.new(File.expand_path(filename)).ascend.find { |dir| dir.basename.to_s == 'features' }
+        features = features_dir(filename)
         return unless features
 
         root = features.dirname.to_s
@@ -59,10 +93,27 @@ module Solargraph
       def keyword_method_pins(feature)
         language = ShadowSource.language(feature)
         language = 'en' unless Gherkin::DIALECTS.key?(language)
-        ShadowSource.keyword_methods(language).map do |name|
-          Pin::Method.new(name: name, closure: namespace_pin, scope: :class, visibility: :public).tap do |pin|
+        ShadowSource.step_keywords(Gherkin::Dialect.for(language)).map do |keyword|
+          name = ShadowSource.method_name(keyword)
+          dsl = step_definition_pin if StepKeyword::DEFINITION.include?(keyword.strip)
+          Pin::Method.new(name: name, closure: namespace_pin, scope: :class, visibility: :public,
+                          comments: dsl&.comments || StepKeyword::DOCS[keyword.strip],
+                          location: dsl&.location).tap do |pin|
             pin.parameters.push Pin::Parameter.new(name: PARAM_NAME, closure: pin)
           end
+        end
+      end
+
+      # Cucumber aliases its Step keywords to `register_rb_step_definition` at runtime.
+      # @return [Pin::Method, nil] nil when the workspace bundle lacks cucumber
+      def step_definition_pin
+        return @step_definition_pin if defined?(@step_definition_pin)
+
+        @step_definition_pin = begin
+          dsl = File.join(Gem::Specification.find_by_name('cucumber').full_gem_path, 'lib/cucumber/glue/dsl.rb')
+          SourceMap.load(dsl).pins.find { |pin| pin.path == "#{DSL}#register_rb_step_definition" }
+        rescue Gem::MissingSpecError
+          nil
         end
       end
 

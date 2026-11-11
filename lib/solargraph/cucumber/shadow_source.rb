@@ -30,13 +30,6 @@ module Solargraph
         @code = transform
       end
 
-      # @param language [String]
-      # @return [Array<String>] keyword method names (e.g. `Given`, `Gegeben_sei`, `_`), any dialect when no language
-      def self.keyword_methods(language = nil)
-        dialects = language ? [Gherkin::Dialect.for(language)] : Gherkin::DIALECTS.keys.map { Gherkin::Dialect.for(_1) }
-        dialects.flat_map { |d| step_keywords(d) }.map { method_name(_1) }.uniq
-      end
-
       # @param feature [String] the `.feature` text
       # @return [String, nil] the `# language:` the feature declares
       def self.language(feature)

@@ -40,8 +40,8 @@ RSpec.describe Solargraph::Cucumber::Convention do
       pins.map { |pin| "#{File.basename(pin.location.filename)}:#{pin.location.range.start.line + 1}" }
     end
 
-    it 'returns an empty environ for Ruby files' do
-      source_map = Solargraph::SourceMap.load_string('Given(/^a step$/) {}', 'features/step_definitions/steps.rb')
+    it 'returns an empty environ for Ruby files outside a features directory' do
+      source_map = Solargraph::SourceMap.load_string('Given(/^a step$/) {}', 'lib/steps.rb')
 
       expect(described_class.new.local(source_map)).to eq(Solargraph::Convention::Base::EMPTY_ENVIRON)
     end
