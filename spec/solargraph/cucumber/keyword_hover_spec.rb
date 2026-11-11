@@ -10,8 +10,8 @@ RSpec.describe 'Hover on a Step keyword' do
     end
   end
 
-  # @return [String, nil] the Markdown the language server shows on hover
-  def hover(feature, line, column)
+  # @return [Hash, Array, nil] the language server's result for the message at the position
+  def request(message_class, feature, line, column)
     path = File.join(@root, 'features', 'x.feature')
     FileUtils.mkdir_p(File.dirname(path))
     File.write(File.join(@root, '.solargraph.yml'), { 'include' => ['features/**/*.feature'] }.to_yaml)
@@ -21,9 +21,14 @@ RSpec.describe 'Hover on a Step keyword' do
     uri = Solargraph::LanguageServer::UriHelpers.file_to_uri(path)
     host.open uri, feature, 1
     params = { 'textDocument' => { 'uri' => uri }, 'position' => { 'line' => line, 'character' => column } }
-    message = Solargraph::LanguageServer::Message::TextDocument::Hover.new(host, { 'params' => params })
+    message = message_class.new(host, { 'params' => params })
     message.process
-    message.result&.dig(:contents, :value)
+    message.result
+  end
+
+  # @return [String, nil] the Markdown the language server shows on hover
+  def hover(...)
+    request(Solargraph::LanguageServer::Message::TextDocument::Hover, ...)&.dig(:contents, :value)
   end
 
   feature = <<~GHERKIN
@@ -37,16 +42,27 @@ RSpec.describe 'Hover on a Step keyword' do
         * f
   GHERKIN
 
-  {
-    2 => '**Given** Step — puts the system in a known state before the user acts.',
-    3 => '**When** Step — describes the action or event under test.',
-    4 => '**Then** Step — checks an expected outcome.',
-    5 => '**And** Step — continues the previous Given, When or Then.',
-    6 => '**But** Step — continues the previous step, phrased as a contrast.',
-    7 => '**`*`** Step — a Step written as a bullet; Gherkin gives it no Given/When/Then meaning.'
-  }.each do |line, text|
-    it "documents the keyword on line #{line + 1}" do
-      expect(hover(feature, line, 4)).to include(text)
+  %w[Given When Then And But].each.with_index(2) do |keyword, line|
+    it "documents #{keyword} with cucumber-ruby's docs of the method it aliases" do
+      text = hover(feature, line, 4)
+
+      expect(text).to include('Registers a new Ruby StepDefinition. This method is aliased')
+      expect(text).not_to include("**#{keyword}** Step", 'defines a Step Definition')
     end
+  end
+
+  it 'documents * as a bullet Step' do
+    expect(hover(feature, 7, 4)).to include(
+      '**`*`** Step — a Step written as a bullet; Gherkin gives it no Given/When/Then meaning.'
+    )
+  end
+
+  it 'defines a Step keyword as the Cucumber method it aliases' do
+    result = request(Solargraph::LanguageServer::Message::TextDocument::Definition, feature, 2, 4)
+
+    dsl = File.join(Gem::Specification.find_by_name('cucumber').full_gem_path, 'lib/cucumber/glue/dsl.rb')
+    expect(result.map { |location| location[:uri] }).to eq [Solargraph::LanguageServer::UriHelpers.file_to_uri(dsl)]
+    target = File.readlines(dsl)[result.first[:range][:start][:line]]
+    expect(target).to include('def register_rb_step_definition(regexp, symbol')
   end
 end

@@ -96,10 +96,25 @@ module Solargraph
         language = 'en' unless Gherkin::DIALECTS.key?(language)
         ShadowSource.step_keywords(Gherkin::Dialect.for(language)).map do |keyword|
           name = ShadowSource.method_name(keyword)
+          dsl = step_definition_pin if StepKeyword::DEFINITION_DOCS.key?(keyword.strip)
           Pin::Method.new(name: name, closure: namespace_pin, scope: :class, visibility: :public,
-                          comments: StepKeyword::DOCS[keyword.strip]).tap do |pin|
+                          comments: dsl&.comments || StepKeyword::DOCS[keyword.strip],
+                          location: dsl&.location).tap do |pin|
             pin.parameters.push Pin::Parameter.new(name: PARAM_NAME, closure: pin)
           end
+        end
+      end
+
+      # Cucumber aliases its Step keywords to `register_rb_step_definition` at runtime.
+      # @return [Pin::Method, nil] nil when the workspace bundle lacks cucumber
+      def step_definition_pin
+        return @step_definition_pin if defined?(@step_definition_pin)
+
+        @step_definition_pin = begin
+          dsl = File.join(Gem::Specification.find_by_name('cucumber').full_gem_path, 'lib/cucumber/glue/dsl.rb')
+          SourceMap.load(dsl).pins.find { |pin| pin.path == "#{DSL}#register_rb_step_definition" }
+        rescue Gem::MissingSpecError
+          nil
         end
       end
 
