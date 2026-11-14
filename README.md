@@ -55,10 +55,11 @@ Hover docs for the Cucumber DSL come from the `cucumber` gem, so it must be in y
 bundle exec solargraph gems cucumber
 ```
 
-### Keep RuboCop off `.feature` files
+### RuboCop and `.feature` files
 
-Solargraph reads a `.feature` file as generated Ruby code. It does not typecheck or format that code, but its `rubocop`
-reporter lints it unless your `.rubocop.yml` excludes feature files:
+Solargraph reads a `.feature` file as generated Ruby code. With Solargraph from the `cucumber` branch (see
+Installation), it does not typecheck, format or lint that code. A checkout of that branch from before it skipped them
+in its `rubocop` reporter lints feature files unless your `.rubocop.yml` excludes them:
 
 ```yaml
 AllCops:

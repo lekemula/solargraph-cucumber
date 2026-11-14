@@ -2,8 +2,8 @@
 
 require 'tmpdir'
 
-# Ruby diagnostics and formatting on the cucumber-sandbox's features, set up as the README advises: RuboCop excludes
-# `.feature` files, and core skips the typecheck reporter and formatting on transformed sources.
+# Ruby diagnostics and formatting on the cucumber-sandbox's features. Core skips the RuboCop and typecheck reporters
+# and formatting on transformed sources, with or without the `.feature` Exclude the README gives for older versions.
 RSpec.describe 'Ruby tooling in the cucumber-sandbox' do
   sandbox = ENV.fetch('CUCUMBER_SANDBOX', File.expand_path('~/Projects/open_source/cucumber-sandbox'))
 
@@ -37,10 +37,9 @@ RSpec.describe 'Ruby tooling in the cucumber-sandbox' do
     expect(diagnose_features.values).to all(be_empty)
   end
 
-  it 'reports only RuboCop offenses on features without the Exclude' do
+  it 'reports no diagnostics on features without the Exclude' do
     File.delete(File.join(@root, '.rubocop.yml'))
-    sources = diagnose_features.values.flatten.map { |diag| diag[:source] }.uniq
-    expect(sources).to eq(['rubocop'])
+    expect(diagnose_features.values).to all(be_empty)
   end
 
   it 'does not format features' do
